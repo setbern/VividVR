@@ -3,6 +3,7 @@ package com.vividvr.vividvr_unity;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
@@ -41,16 +42,17 @@ import android.widget.Toast;
 
 import org.opencv.core.Size;
 
+import at.jumpch.sdk.JCVideoCapture;
+import at.jumpch.sdk.JCVideoCaptureCallback;
 import imageProcessing.ColorBlobDetector;
 
-public class MainActivity extends Activity implements OnTouchListener, CvCameraViewListener2 {
+public class MainActivity extends Activity implements OnTouchListener {   //  CvCameraViewListener2
 
     private static final String    TAG                 = "HandPose::MainActivity";
     public static final int        JAVA_DETECTOR       = 0;
     public static final int        NATIVE_DETECTOR     = 1;
 
-    private Mat                    mRgba;
-    private Mat                    mGray;
+    private final AtomicReference<Mat> mRgba = new AtomicReference<Mat>();
     private Mat 					mIntermediateMat;
 
     private int                    mDetectorType       = JAVA_DETECTOR;
@@ -59,7 +61,6 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
     private List<Size> mResolutionList;
     
     private SeekBar minTresholdSeekbar = null;
-    private SeekBar maxTresholdSeekbar = null;
     private TextView minTresholdSeekbarText = null;
     private TextView numberOfFingersText = null;
     
@@ -91,7 +92,7 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
                 case LoaderCallbackInterface.SUCCESS:
                 {
                     Log.i(TAG, "OpenCV loaded successfully");
-                    mOpenCvCameraView.enableView();
+//                    mOpenCvCameraView.enableView();
                     mOpenCvCameraView.setOnTouchListener(MainActivity.this);
                     // 640x480
                 } break;
@@ -107,6 +108,28 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
 
+    JCVideoCapture videocap;
+    JCVideoCaptureCallback videocallback = new JCVideoCaptureCallback() {
+        @Override
+        public void capturerStarted(boolean b) {
+            Log.i(TAG, "captureStarted: " + Boolean.toString(b));
+        }
+
+        @Override
+        public void provideFrame(byte[] bytes, int i, int i1, int i2) {
+            Log.i(TAG, "provideFrameA: ");
+        }
+
+        @Override
+        public void provideFrame(byte[] bytes, int i, int i1, int i2, long l, int i3) {
+            Log.i(TAG, "provideFrameB: " + Long.toString(l));
+            Mat mat = new Mat(i1+i1/2,i, CvType.CV_8UC1);
+            mat.put(0, 0, bytes);
+            onCameraFrame(mat);
+        }
+    };
+
+    private VividUnityPlugin plugin = new VividUnityPlugin();;
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -117,8 +140,9 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
         setContentView(R.layout.main_surface_view);
 
         mOpenCvCameraView = (CustomSufaceView) findViewById(R.id.main_surface_view);
-        mOpenCvCameraView.setCvCameraViewListener(this);
-        
+//        mOpenCvCameraView.setCvCameraViewListener(this);
+
+
         minTresholdSeekbarText = (TextView) findViewById(R.id.textView3);
         
         
@@ -139,9 +163,12 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
 	 
 	            public void onStopTrackingTouch(SeekBar seekBar) {
 	            	minTresholdSeekbarText.setText(String.valueOf(progressChanged));
+
 	            }
 		});
         minTresholdSeekbar.setProgress(8700);
+        plugin.init_plugin(this, 6000);
+
     }
 
     @Override
@@ -157,7 +184,8 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
     public void onResume()
     {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
+
+//        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
     }
 
     public void onDestroy() {
@@ -166,8 +194,7 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
     }
 
     public void onCameraViewStarted(int width, int height) {
-        mGray = new Mat();
-        mRgba = new Mat();
+        mRgba.set(new Mat());
         mIntermediateMat = new Mat();
         
         /*
@@ -190,10 +217,11 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
         
         Camera.Parameters cParams = mOpenCvCameraView.getParameters();
         cParams.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+
         mOpenCvCameraView.setParameters(cParams);
         Toast.makeText(this, "Focus mode : "+cParams.getFocusMode(), Toast.LENGTH_SHORT).show();
         
-        mRgba = new Mat(height, width, CvType.CV_8UC4);
+        mRgba.set(new Mat(height, width, CvType.CV_8UC4));
         mDetector = new ColorBlobDetector();
         mSpectrum = new Mat();
         mBlobColorRgba = new Scalar(255);
@@ -205,56 +233,79 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
     }
 
     public void onCameraViewStopped() {
-        mGray.release();
-        mRgba.release();
+//        mGray.release();
+        mRgba.get().release();
+    }
+
+    public void start_jc(View v) {
+//        mRgba.set(new Mat());
+//        mIntermediateMat = new Mat();
+//        mRgba.set(new Mat(480, 480, CvType.CV_8UC4));
+//        mDetector = new ColorBlobDetector();
+//        mSpectrum = new Mat();
+//        mBlobColorRgba = new Scalar(255);
+//        mBlobColorHsv = new Scalar(255);
+//        SPECTRUM_SIZE = new Size(200, 64);
+//        CONTOUR_COLOR = new Scalar(255,0,0,255);
+//        CONTOUR_COLOR_WHITE = new Scalar(255,255,255,255);
+//
+//        videocap = new JCVideoCapture();
+//        videocap.selectCamera(Camera.CameraInfo.CAMERA_FACING_BACK);
+//        videocap.startCapture(480, 480, 8, MainActivity.this, videocallback);
+//        videocap.enableHD(false);
+        plugin.start_capturing();
+        plugin.calibrate((int)200, (int)200);
     }
 
     public boolean onTouch(View v, MotionEvent event) {
-        int cols = mRgba.cols();
-        int rows = mRgba.rows();
-
-        int xOffset = (mOpenCvCameraView.getWidth() - cols) / 2;
-        int yOffset = (mOpenCvCameraView.getHeight() - rows) / 2;
-
-        int x = (int)event.getX() - xOffset;
-        int y = (int)event.getY() - yOffset;
-
-        Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
-
-        if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
-
-        Rect touchedRect = new Rect();
-
-        touchedRect.x = (x>5) ? x-5 : 0;
-        touchedRect.y = (y>5) ? y-5 : 0;
-
-        touchedRect.width = (x+5 < cols) ? x + 5 - touchedRect.x : cols - touchedRect.x;
-        touchedRect.height = (y+5 < rows) ? y + 5 - touchedRect.y : rows - touchedRect.y;
-
-        Mat touchedRegionRgba = mRgba.submat(touchedRect);
-
-        Mat touchedRegionHsv = new Mat();
-        Imgproc.cvtColor(touchedRegionRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL);
-
-        // Calculate average color of touched region
-        mBlobColorHsv = Core.sumElems(touchedRegionHsv);
-        int pointCount = touchedRect.width*touchedRect.height;
-        for (int i = 0; i < mBlobColorHsv.val.length; i++)
-            mBlobColorHsv.val[i] /= pointCount;
-
-        mBlobColorRgba = converScalarHsv2Rgba(mBlobColorHsv);
-
-        Log.i(TAG, "Touched rgba color: (" + mBlobColorRgba.val[0] + ", " + mBlobColorRgba.val[1] +
-                ", " + mBlobColorRgba.val[2] + ", " + mBlobColorRgba.val[3] + ")");
-
-        mDetector.setHsvColor(mBlobColorHsv);
-
-        Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
-
-        mIsColorSelected = true;
-
-        touchedRegionRgba.release();
-        touchedRegionHsv.release();
+        plugin.calibrate((int)event.getX(), (int)event.getY());
+//        Mat copy = mRgba.get().clone();
+//        int cols = copy.cols();
+//        int rows = copy.rows();
+//
+//        int xOffset = (mOpenCvCameraView.getWidth() - cols) / 2;
+//        int yOffset = (mOpenCvCameraView.getHeight() - rows) / 2;
+//
+//        int x = (int)event.getX() - xOffset;
+//        int y = (int)event.getY() - yOffset;
+//
+//        Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
+//
+//        if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
+//
+//        Rect touchedRect = new Rect();
+//
+//        touchedRect.x = (x>5) ? x-5 : 0;
+//        touchedRect.y = (y>5) ? y-5 : 0;
+//
+//        touchedRect.width = (x+5 < cols) ? x + 5 - touchedRect.x : cols - touchedRect.x;
+//        touchedRect.height = (y+5 < rows) ? y + 5 - touchedRect.y : rows - touchedRect.y;
+//
+//        Mat touchedRegionRgba = copy.submat(touchedRect);
+//
+//        Mat touchedRegionHsv = new Mat();
+//        Imgproc.cvtColor(touchedRegionRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL);
+//
+//        // Calculate average color of touched region
+//        mBlobColorHsv = Core.sumElems(touchedRegionHsv);
+//        int pointCount = touchedRect.width*touchedRect.height;
+//        for (int i = 0; i < mBlobColorHsv.val.length; i++)
+//            mBlobColorHsv.val[i] /= pointCount;
+//
+//        mBlobColorRgba = converScalarHsv2Rgba(mBlobColorHsv);
+//
+//        Log.i(TAG, "Touched rgba color: (" + mBlobColorRgba.val[0] + ", " + mBlobColorRgba.val[1] +
+//                ", " + mBlobColorRgba.val[2] + ", " + mBlobColorRgba.val[3] + ")");
+//
+//        mDetector.setHsvColor(mBlobColorHsv);
+//
+//        Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
+//
+//        mIsColorSelected = true;
+//
+//        copy.release();
+//        touchedRegionRgba.release();
+//        touchedRegionHsv.release();
 
         return false; // don't need subsequent touch events
     }
@@ -263,29 +314,29 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
         Mat pointMatRgba = new Mat();
         Mat pointMatHsv = new Mat(1, 1, CvType.CV_8UC3, hsvColor);
         Imgproc.cvtColor(pointMatHsv, pointMatRgba, Imgproc.COLOR_HSV2RGB_FULL, 4);
-
+        pointMatHsv.release();
         return new Scalar(pointMatRgba.get(0, 0));
     }
     
-    public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        mRgba = inputFrame.rgba();
-        mGray = inputFrame.gray();
-
+    public Mat onCameraFrame(Mat yuv) {
+//        mRgba = inputFrame.rgba();
+        Imgproc.cvtColor(yuv, mRgba.get(), Imgproc.COLOR_YUV2RGBA_NV21, 4);
+        yuv.release();
         iThreshold = minTresholdSeekbar.getProgress();  
         
         //Imgproc.blur(mRgba, mRgba, new Size(5,5));
-        Imgproc.GaussianBlur(mRgba, mRgba, new org.opencv.core.Size(3, 3), 1, 1);
+        Imgproc.GaussianBlur(mRgba.get(), mRgba.get(), new org.opencv.core.Size(3, 3), 1, 1);
         //Imgproc.medianBlur(mRgba, mRgba, 3);
         
-        if (!mIsColorSelected) return mRgba;
+        if (!mIsColorSelected) return mRgba.get();
 
 		List<MatOfPoint> contours = mDetector.getContours();
-		mDetector.process(mRgba);
+		mDetector.process(mRgba.get());
 
 		Log.d(TAG, "Contours count: " + contours.size());
 
 		if (contours.size() <= 0) {
-			return mRgba;
+			return mRgba.get();
 		}
 
 		RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contours.get(0)	.toArray()));
@@ -304,7 +355,7 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
 		}
 
 		Rect boundRect = Imgproc.boundingRect(new MatOfPoint(contours.get(boundPos).toArray()));
-		Imgproc.rectangle( mRgba, boundRect.tl(), boundRect.br(), CONTOUR_COLOR_WHITE, 2, 8, 0 );
+		Imgproc.rectangle(mRgba.get(), boundRect.tl(), boundRect.br(), CONTOUR_COLOR_WHITE, 2, 8, 0 );
 		
 		Log.d(TAG, 
     			" Row start ["+ 
@@ -322,7 +373,7 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
     			" A ["+a+"] br y - tl y = ["+(boundRect.br().y - boundRect.tl().y)+"]");
 		
 		//Core.rectangle( mRgba, boundRect.tl(), boundRect.br(), CONTOUR_COLOR, 2, 8, 0 );
-		Imgproc.rectangle( mRgba, boundRect.tl(), new Point(boundRect.br().x, a), CONTOUR_COLOR, 2, 8, 0 );
+		Imgproc.rectangle(mRgba.get(), boundRect.tl(), new Point(boundRect.br().x, a), CONTOUR_COLOR, 2, 8, 0 );
 		
 		MatOfPoint2f pointMat = new MatOfPoint2f();
 		Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(boundPos).toArray()), pointMat, 3, true);
@@ -332,7 +383,7 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
 		MatOfInt4 convexDefect = new MatOfInt4();
 		Imgproc.convexHull(new MatOfPoint(contours.get(boundPos).toArray()), hull);
 		
-		if(hull.toArray().length < 3) return mRgba;
+		if(hull.toArray().length < 3) return mRgba.get();
 		
 		Imgproc.convexityDefects(new MatOfPoint(contours.get(boundPos)	.toArray()), hull, convexDefect);
 
@@ -364,7 +415,7 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
 		Log.d(TAG, "hull: " + hull.toList());
 		Log.d(TAG, "defects: " + convexDefect.toList());
 
-		Imgproc.drawContours(mRgba, hullPoints, -1, CONTOUR_COLOR, 3);
+		Imgproc.drawContours(mRgba.get(), hullPoints, -1, CONTOUR_COLOR, 3);
 
 		int defectsTotal = (int) convexDefect.total();
 		Log.d(TAG, "Defect total " + defectsTotal);
@@ -374,11 +425,11 @@ public class MainActivity extends Activity implements OnTouchListener, CvCameraV
 		
 		mHandler.post(mUpdateFingerCountResults);
 		
-		for(Point p : listPoDefect){
-			Imgproc.circle(mRgba, p, 6, new Scalar(255,0,255));
-		}
+//		for(Point p : listPoDefect){
+//			Imgproc.circle(mRgba.get(), p, 6, new Scalar(255,0,255));
+//		}
         
-        return mRgba;
+        return mRgba.get();
     }
     
     public void updateNumberOfFingers(){
