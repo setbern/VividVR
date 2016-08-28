@@ -1,4 +1,14 @@
+
 //javascript components!
 
-var testSelect = document.querySelector("a-entity.test-sphere");
-console.log(testSelect);
+
+AFRAME.registerComponent('fireballDisappear', {
+  init: function () {
+    var el = this.el;
+    var fb = document.getElementById('fireball');
+
+    el.addEventListener('click', function () {
+      fb.setAttribute('visible', false);
+    })
+  }
+});
