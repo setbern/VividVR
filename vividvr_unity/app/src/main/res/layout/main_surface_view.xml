@@ -1,8 +1,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:opencv="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -20,12 +19,21 @@
             <!--<com.vividvr.vividvr_unity.CustomSufaceView-->
                 <!--android:layout_width="match_parent"-->
                 <!--android:layout_height="match_parent" />-->
+            <ImageView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:id="@+id/imageView"
+                android:layout_below="@+id/numberOfFingers"
+                android:layout_marginTop="50dp"
+                android:layout_alignParentEnd="true" />
+
             <com.vividvr.vividvr_unity.CustomSufaceView
                 android:id="@+id/main_surface_view"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 opencv:camera_id="any"
                 opencv:show_fps="true" />
+
         </LinearLayout>
 
         <RelativeLayout
@@ -88,11 +96,21 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="start jc"
+                android:text="start"
                 android:id="@+id/button"
+                android:onClick="start_jc"
                 android:layout_above="@+id/linearLayout"
-                android:layout_alignEnd="@+id/linearLayout"
-                android:onClick="start_jc" />
+                android:layout_alignEnd="@+id/numberOfFingers"
+                android:layout_marginBottom="69dp" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="restart"
+                android:id="@+id/button2"
+                android:onClick="restart_jc"
+                android:layout_above="@+id/linearLayout"
+                android:layout_alignEnd="@+id/numberOfFingers" />
 
         </RelativeLayout>
 

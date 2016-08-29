@@ -1,11 +1,13 @@
 package com.vividvr.vividvr_unity;
 
-import java.util.List;
 import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
 import android.util.AttributeSet;
+
 import org.opencv.android.JavaCameraView;
+
+import java.util.List;
 
 public class CustomSufaceView extends JavaCameraView {
 

@@ -1,15 +1,15 @@
 package imageProcessing;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class ColorBlobDetector {
 	// Lower and Upper bounds for range checking in HSV color space
@@ -97,6 +97,16 @@ public class ColorBlobDetector {
             MatOfPoint contour = each.next();
             if (Imgproc.contourArea(contour) > mMinContourArea*maxArea) {
 //                Core.multiply(contour, new Scalar(4,4), contour);
+                int rows = contour.rows();
+                int cols = contour.cols();
+                for(int i = 0; i < rows; i++)
+                {
+                    for(int j = 0; j < cols; j++)
+                    {
+                        double[] new_val = {contour.get(i,j)[0]*4.0, contour.get(i,j)[1]*4.0 };
+                        contour.put(i, j, new_val);
+                    }
+                }
                 mContours.add(contour);
             }
         }

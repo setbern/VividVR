@@ -4,8 +4,6 @@ import android.content.Context;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.SeekBar;
-import android.widget.TextView;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -106,14 +104,11 @@ public class VividUnityPlugin {
         }
     };
 
-    public VividUnityPlugin() {
-
-    }
-
     public void init_plugin(Context aContext, int thresh) {
         mContext = aContext;
         iThreshold = thresh;
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, mContext, mLoaderCallback);
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, mContext, mLoaderCallback);
+
     }
 
     public int get_number_of_fingers() {
@@ -121,6 +116,7 @@ public class VividUnityPlugin {
     }
 
     private boolean is_capturing = false;
+
     public void start_capturing() {
         if(!is_capturing) {
             mRgba.set(new Mat());

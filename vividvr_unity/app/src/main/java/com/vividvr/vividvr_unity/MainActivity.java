@@ -1,16 +1,23 @@
 package com.vividvr.vividvr_unity;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import android.app.Activity;
+import android.graphics.Bitmap;
+import android.hardware.Camera;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
+import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
-import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -22,25 +29,12 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.imgproc.Moments;
-
-
-import android.app.Activity;
-import android.graphics.SumPathEffect;
-import android.hardware.Camera;
-import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnTouchListener;
-import android.view.WindowManager;
-import android.widget.SeekBar;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import at.jumpch.sdk.JCVideoCapture;
 import at.jumpch.sdk.JCVideoCaptureCallback;
@@ -78,7 +72,8 @@ public class MainActivity extends Activity implements OnTouchListener {   //  Cv
     
     final Handler mHandler = new Handler();
     int numberOfFingers = 0;
-    
+
+    private ImageView im_view;
     final Runnable mUpdateFingerCountResults = new Runnable() {
         public void run() {
         	updateNumberOfFingers();
@@ -94,7 +89,7 @@ public class MainActivity extends Activity implements OnTouchListener {   //  Cv
                     Log.i(TAG, "OpenCV loaded successfully");
 //                    mOpenCvCameraView.enableView();
                     mOpenCvCameraView.setOnTouchListener(MainActivity.this);
-                    // 640x480
+                    im_view.setOnTouchListener(MainActivity.this);
                 } break;
                 default:
                 {
@@ -144,8 +139,9 @@ public class MainActivity extends Activity implements OnTouchListener {   //  Cv
 
 
         minTresholdSeekbarText = (TextView) findViewById(R.id.textView3);
-        
-        
+
+        im_view = (ImageView) findViewById(R.id.imageView);
+
         numberOfFingersText = (TextView) findViewById(R.id.numberOfFingers);
         
         minTresholdSeekbar = (SeekBar)findViewById(R.id.seekBar1);        
@@ -166,8 +162,14 @@ public class MainActivity extends Activity implements OnTouchListener {   //  Cv
 
 	            }
 		});
+
+
+
         minTresholdSeekbar.setProgress(8700);
         plugin.init_plugin(this, 6000);
+        mOpenCvCameraView.setOnTouchListener(MainActivity.this);
+        im_view.setOnTouchListener(MainActivity.this);
+
 
     }
 
@@ -233,79 +235,86 @@ public class MainActivity extends Activity implements OnTouchListener {   //  Cv
     }
 
     public void onCameraViewStopped() {
-//        mGray.release();
-        mRgba.get().release();
+    }
+
+    public void restart_jc(View v) {
+        videocap.stopCapture();
+        mIsColorSelected = false;
+        start_jc(v);
     }
 
     public void start_jc(View v) {
-//        mRgba.set(new Mat());
-//        mIntermediateMat = new Mat();
-//        mRgba.set(new Mat(480, 480, CvType.CV_8UC4));
-//        mDetector = new ColorBlobDetector();
-//        mSpectrum = new Mat();
-//        mBlobColorRgba = new Scalar(255);
-//        mBlobColorHsv = new Scalar(255);
-//        SPECTRUM_SIZE = new Size(200, 64);
-//        CONTOUR_COLOR = new Scalar(255,0,0,255);
-//        CONTOUR_COLOR_WHITE = new Scalar(255,255,255,255);
-//
-//        videocap = new JCVideoCapture();
-//        videocap.selectCamera(Camera.CameraInfo.CAMERA_FACING_BACK);
-//        videocap.startCapture(480, 480, 8, MainActivity.this, videocallback);
-//        videocap.enableHD(false);
-        plugin.start_capturing();
-        plugin.calibrate((int)200, (int)200);
+        mRgba.set(new Mat());
+        mIntermediateMat = new Mat();
+        mRgba.set(new Mat(480, 480, CvType.CV_8UC4));
+        mDetector = new ColorBlobDetector();
+        mSpectrum = new Mat();
+        mBlobColorRgba = new Scalar(255);
+        mBlobColorHsv = new Scalar(255);
+        SPECTRUM_SIZE = new Size(200, 64);
+        CONTOUR_COLOR = new Scalar(255,0,0,255);
+        CONTOUR_COLOR_WHITE = new Scalar(255,255,255,255);
+
+        videocap = new JCVideoCapture();
+        videocap.selectCamera(Camera.CameraInfo.CAMERA_FACING_BACK);
+        videocap.startCapture(480, 480, 8, MainActivity.this, videocallback);
+        videocap.enableHD(false);
+//        plugin.start_capturing();
+//        plugin.calibrate((int)200, (int)200);
     }
 
     public boolean onTouch(View v, MotionEvent event) {
-        plugin.calibrate((int)event.getX(), (int)event.getY());
-//        Mat copy = mRgba.get().clone();
-//        int cols = copy.cols();
-//        int rows = copy.rows();
-//
-//        int xOffset = (mOpenCvCameraView.getWidth() - cols) / 2;
-//        int yOffset = (mOpenCvCameraView.getHeight() - rows) / 2;
-//
-//        int x = (int)event.getX() - xOffset;
-//        int y = (int)event.getY() - yOffset;
-//
-//        Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
-//
-//        if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
-//
-//        Rect touchedRect = new Rect();
-//
-//        touchedRect.x = (x>5) ? x-5 : 0;
-//        touchedRect.y = (y>5) ? y-5 : 0;
-//
-//        touchedRect.width = (x+5 < cols) ? x + 5 - touchedRect.x : cols - touchedRect.x;
-//        touchedRect.height = (y+5 < rows) ? y + 5 - touchedRect.y : rows - touchedRect.y;
-//
-//        Mat touchedRegionRgba = copy.submat(touchedRect);
-//
-//        Mat touchedRegionHsv = new Mat();
-//        Imgproc.cvtColor(touchedRegionRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL);
-//
-//        // Calculate average color of touched region
-//        mBlobColorHsv = Core.sumElems(touchedRegionHsv);
-//        int pointCount = touchedRect.width*touchedRect.height;
-//        for (int i = 0; i < mBlobColorHsv.val.length; i++)
-//            mBlobColorHsv.val[i] /= pointCount;
-//
-//        mBlobColorRgba = converScalarHsv2Rgba(mBlobColorHsv);
-//
-//        Log.i(TAG, "Touched rgba color: (" + mBlobColorRgba.val[0] + ", " + mBlobColorRgba.val[1] +
-//                ", " + mBlobColorRgba.val[2] + ", " + mBlobColorRgba.val[3] + ")");
-//
-//        mDetector.setHsvColor(mBlobColorHsv);
-//
-//        Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
-//
-//        mIsColorSelected = true;
-//
-//        copy.release();
-//        touchedRegionRgba.release();
-//        touchedRegionHsv.release();
+//        plugin.calibrate((int)event.getX(), (int)event.getY());
+
+        Mat copy = mRgba.get().clone();
+        int cols = copy.cols();
+        int rows = copy.rows();
+
+        int xOffset = (im_view.getWidth() - cols) / 2;
+        int yOffset = (im_view.getHeight() - rows) / 2;
+
+        int x = (int)event.getX() - xOffset;
+        int y = (int)event.getY() - yOffset;
+
+        Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
+
+        if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
+
+        if(mIsColorSelected) return false;
+
+        Rect touchedRect = new Rect();
+
+        touchedRect.x = (x>5) ? x-5 : 0;
+        touchedRect.y = (y>5) ? y-5 : 0;
+
+        touchedRect.width = (x+5 < cols) ? x + 5 - touchedRect.x : cols - touchedRect.x;
+        touchedRect.height = (y+5 < rows) ? y + 5 - touchedRect.y : rows - touchedRect.y;
+
+        Mat touchedRegionRgba = copy.submat(touchedRect);
+
+        Mat touchedRegionHsv = new Mat();
+        Imgproc.cvtColor(touchedRegionRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL);
+
+        // Calculate average color of touched region
+        mBlobColorHsv = Core.sumElems(touchedRegionHsv);
+        int pointCount = touchedRect.width*touchedRect.height;
+        for (int i = 0; i < mBlobColorHsv.val.length; i++)
+            mBlobColorHsv.val[i] /= pointCount;
+
+        mBlobColorRgba = converScalarHsv2Rgba(mBlobColorHsv);
+
+        Log.i(TAG, "Touched rgba color: (" + mBlobColorRgba.val[0] + ", " + mBlobColorRgba.val[1] +
+                ", " + mBlobColorRgba.val[2] + ", " + mBlobColorRgba.val[3] + ")");
+
+        mDetector.setHsvColor(mBlobColorHsv);
+
+        Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
+
+        mIsColorSelected = true;
+
+        copy.release();
+        touchedRegionRgba.release();
+        touchedRegionHsv.release();
 
         return false; // don't need subsequent touch events
     }
@@ -322,12 +331,11 @@ public class MainActivity extends Activity implements OnTouchListener {   //  Cv
 //        mRgba = inputFrame.rgba();
         Imgproc.cvtColor(yuv, mRgba.get(), Imgproc.COLOR_YUV2RGBA_NV21, 4);
         yuv.release();
-        iThreshold = minTresholdSeekbar.getProgress();  
-        
+        iThreshold = minTresholdSeekbar.getProgress();
         //Imgproc.blur(mRgba, mRgba, new Size(5,5));
         Imgproc.GaussianBlur(mRgba.get(), mRgba.get(), new org.opencv.core.Size(3, 3), 1, 1);
         //Imgproc.medianBlur(mRgba, mRgba, 3);
-        
+        mHandler.post(mUpdateFingerCountResults);
         if (!mIsColorSelected) return mRgba.get();
 
 		List<MatOfPoint> contours = mDetector.getContours();
@@ -425,14 +433,21 @@ public class MainActivity extends Activity implements OnTouchListener {   //  Cv
 		
 		mHandler.post(mUpdateFingerCountResults);
 		
-//		for(Point p : listPoDefect){
-//			Imgproc.circle(mRgba.get(), p, 6, new Scalar(255,0,255));
-//		}
+		for(Point p : listPoDefect){
+			Imgproc.circle(mRgba.get(), p, 4, new Scalar(255,0,255));
+		}
         
         return mRgba.get();
     }
     
     public void updateNumberOfFingers(){
     	numberOfFingersText.setText(String.valueOf(this.numberOfFingers));
+        Mat m = mRgba.get();
+
+        // convert to bitmap for display
+        Bitmap bm = Bitmap.createBitmap(m.cols(), m.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(m, bm);
+        im_view.setImageBitmap(bm);
+
     }
 }
